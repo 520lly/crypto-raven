@@ -5,23 +5,22 @@ import urllib.parse
 import config
 import logging
 import sys
-from fiatconverter import FiatConverter
 from utils import log_exception
 import traceback
 import config
 import threading
 
 class Market(object):
-    def __init__(self, base_currency, market_currency, pair_code):
+    def __init__(self, base_currency, market_currency, pair_code, fee_rate):
         self.name = self.__class__.__name__
         self.base_currency = base_currency
         self.market_currency = market_currency
         self.pair_code = pair_code
+        self.fee_rate = fee_rate
 
         self.depth_updated = 0
         self.update_rate = 1
-        self.fc = FiatConverter()
-        self.fc.update()
+
         self.is_terminated = False
         self.request_timeout = 5 #5s
 
@@ -44,13 +43,6 @@ class Market(object):
             self.depth = {'asks': [{'price': 0, 'amount': 0}], 'bids': [
                 {'price': 0, 'amount': 0}]}
         return self.depth
-
-    def convert_to_cny(self):
-        if self.currency == "CNY":
-            return
-        for direction in ("asks", "bids"):
-            for order in self.depth[direction]:
-                order["price"] = self.fc.convert(order["price"], self.currency, "CNY")
 
     def subscribe_depth(self):
         if config.SUPPORT_ZMQ:

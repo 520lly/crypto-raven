@@ -32,9 +32,9 @@ from .market import Market
 
 class Bittrex(Market):
     def __init__(self, base_currency, market_currency, pair_code):
-        super().__init__(base_currency, market_currency, pair_code)
+        super().__init__(base_currency, market_currency, pair_code, 0.0025)
 
-        self.client = bittrex.Bittrex('','')
+        self.client = bittrex.Bittrex(None, None)
 
     def update_depth(self):
         raw_depth = self.client.get_orderbook(self.pair_code, 'both')
