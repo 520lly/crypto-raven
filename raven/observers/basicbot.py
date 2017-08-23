@@ -89,9 +89,9 @@ class BasicBot(Observer):
                     order_id = self.clients[kexchange].sell_maker(amount, price)
             else:
                 if type == 'buy':
-                    order_id = self.clients[kexchange].buy(amount, price)
+                    order_id = self.clients[kexchange].buy_limit(amount, price)
                 else:
-                    order_id = self.clients[kexchange].sell(amount, price)
+                    order_id = self.clients[kexchange].sell_limit(amount, price)
 
             if not order_id:
                 logging.warn("%s @%s %f/%f BTC failed, %s" % (type, kexchange, amount, price, order_id))
@@ -113,7 +113,7 @@ class BasicBot(Observer):
                 'time': time.time()
             }
             self.orders.append(order)
-            logging.verbose("submit order %s" % (order))
+            logging.info("submit order %s" % (order))
 
             return order
 
@@ -126,6 +126,8 @@ class BasicBot(Observer):
             logging.warn("cancel %s #%s failed" % (type, order_id))
             return False
         else:
+            logging.info("cancel %s #%s ok" % (type, order_id))
+
             return True
 
     def remove_order(self, order_id):
@@ -148,11 +150,11 @@ class BasicBot(Observer):
         return len(self.get_orders('buy')) > 0
 
     def get_sell_price(self):
-        return self.sellprice
+        return self.sprice
 
     def get_buy_price(self):
-        return self.buyprice
+        return self.bprice
 
     def get_spread(self):
-        return self.sellprice - self.buyprice
+        return self.sprice - self.bprice
         

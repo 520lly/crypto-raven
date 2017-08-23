@@ -16,12 +16,13 @@ import re,sys,re
 import string
 import signal
  
+
+is_sigint_up = False
+
 def sigint_handler(signum, frame):
     global is_sigint_up
     is_sigint_up = True
     print ('catched interrupt signal!')
- 
-is_sigint_up = False
 
 class Arbitrer(object):
     def __init__(self):
@@ -32,11 +33,13 @@ class Arbitrer(object):
         self.init_observers(config.observers)
         self.threadpool = ThreadPoolExecutor(max_workers=10)
 
-
     def init_markets(self, _markets):
         logging.debug("_markets:%s" % _markets)
         self.market_names = _markets
         for market_name in _markets:
+            if self.get_market(market_name):
+                continue
+
             try:
                 exec('import public_markets.' + market_name.lower())
                 market = eval('public_markets.' + market_name.lower() + '.' +
@@ -45,7 +48,7 @@ class Arbitrer(object):
             except (ImportError, AttributeError) as e:
                 print("%s market name is invalid: Ignored (you should check your config file)" % (market_name))
                 logging.warn("exception import:%s" % e)
-                # traceback.print_exc()
+                traceback.print_exc()
 
     def init_observers(self, _observers):
         logging.debug("_observers:%s" % _observers)
@@ -59,7 +62,7 @@ class Arbitrer(object):
                 self.observers.append(observer)
             except (ImportError, AttributeError) as e:
                 print("%s observer name is invalid: Ignored (you should check your config file)" % (observer_name))
-                # print(e)
+                print(e)
                 
     def get_profit_for(self, mi, mj, kask, kbid):
         if self.depths[kask]["asks"][mi]["price"] >= self.depths[kbid]["bids"][mj]["price"]:
@@ -74,37 +77,44 @@ class Arbitrer(object):
             max_amount_sell += self.depths[kbid]["bids"][j]["amount"]
 
         max_amount_pair_t = min(max_amount_buy, max_amount_sell)
-        # max_amount_pair_t = min(max_amount_pair_t, config.max_tx_volume)
 
         buy_total = 0
         w_bprice = 0
         for i in range(mi + 1):
             price = self.depths[kask]["asks"][i]["price"]
             amount = min(max_amount_pair_t, buy_total + self.depths[kask]["asks"][i]["amount"]) - buy_total
-            if amount <= 0.000001:
-                break
+
             buy_total += amount
+
             if w_bprice == 0 or buy_total == 0:
                 w_bprice = price
             else:
                 w_bprice = (w_bprice * (buy_total - amount) + price * amount) / buy_total
+            
+            if max_amount_pair_t - buy_total <= 0.000001:
+                break
 
         sell_total = 0
         w_sprice = 0
         for j in range(mj + 1):
             price = self.depths[kbid]["bids"][j]["price"]
             amount = min(max_amount_pair_t, sell_total + self.depths[kbid]["bids"][j]["amount"]) - sell_total
-            if amount <= 0.000001:
-                break
+
             sell_total += amount
+
             if w_sprice == 0 or sell_total == 0:
                 w_sprice = price
             else:
                 w_sprice = (w_sprice * (sell_total - amount) + price * amount) / sell_total
         
+            if max_amount_pair_t - sell_total <= 0.000001:
+                break
+
         # sell should == buy
         if abs(sell_total-buy_total) > 0.000001:
-            logging.warn("sell_total=%s, buy_total=%s", sell_total, buy_total)
+            logging.warn("sell_total=%s, buy_total=%s, max_amount_pair_t=%s", 
+                sell_total, buy_total, max_amount_pair_t)
+            raise
             return 0, 0, 0, 0
 
         volume = buy_total # or sell_total
@@ -165,18 +175,20 @@ class Arbitrer(object):
             w_sprice = self.arbitrage_depth_opportunity(kask, kbid)
 
         if volume == 0 or exe_bprice == 0 or exe_sprice == 0:
+            logging.warn("parameter exception %s %s %s" % (volume, exe_bprice, exe_sprice))
             return
-
-        # perc = (bid["price"] - ask["price"]) / bid["price"] * 100
-        w_perc = (w_sprice - w_bprice) / w_bprice * 100
 
         ask_market = self.get_market(kask)
         bid_market = self.get_market(kbid)
         if round(w_sprice * ask_market.fee_rate * config.Diff, 8)  >= round(w_bprice * bid_market.fee_rate, 8):
+            logging.verbose("weight pricediff_exist check failed: %s > %s" % (
+                round(w_sprice * ask_market.fee_rate * config.Diff, 8), round(w_bprice * bid_market.fee_rate, 8)))
             return
 
         fee_rate = max(ask_market.fee_rate, bid_market.fee_rate)
         profit = round(profit*(1-fee_rate), 8)
+
+        w_perc = round((w_sprice - w_bprice) / w_bprice - fee_rate, 4)
 
         # notify observer
         for observer in self.observers:
@@ -223,7 +235,15 @@ class Arbitrer(object):
         
         sprice = float(depth1["asks"][0]['price'])
         bprice = float(depth2["bids"][0]['price'])
+
+        if sprice >= bprice:
+            logging.debug("orderbook pricediff_exist check failed: %s > %s" % (
+                round(sprice * config.FEE * config.Diff, 8), round(bprice * config.FEE, 8)))
+            return False   
+
         if round(sprice * config.FEE * config.Diff, 8)  >= round(bprice * config.FEE, 8):
+            logging.verbose("FEE*DIFF pricediff_exist check failed: %s > %s" % (
+                round(sprice * config.FEE * config.Diff, 8), round(bprice * config.FEE, 8)))
             return False
         
         return True
@@ -237,13 +257,15 @@ class Arbitrer(object):
                 if not self.is_pair_market(kmarket1, kmarket2):  # same market
                     continue
 
+                logging.debug("detect ask < bid in [%s %s]" % (kmarket1, kmarket2))
+
                 depth1 = self.depths[kmarket1]
                 depth2 = self.depths[kmarket2]
 
                 if not self.pricediff_exist(depth1, depth2):
                     continue
 
-                logging.verbose("price diff exist")
+                logging.debug("price diff exist in [%s %s]" % (kmarket1, kmarket2))
 
                 self.arbitrage_opportunity(kmarket1, depth1["asks"][0],
                                            kmarket2, depth2["bids"][0])
@@ -263,6 +285,7 @@ class Arbitrer(object):
     def update_depths(self):
         depths = {}
         futures = []
+
         for market in self.markets:
             futures.append(self.threadpool.submit(self.__get_market_depth,
                                                   market, depths))
@@ -288,6 +311,9 @@ class Arbitrer(object):
                     self.depths[market] = depths[market]
             self.tick()
 
+    def update_balance(self):
+        pass
+
     def terminate(self):
         for observer in self.observers:
             observer.terminate()
@@ -305,13 +331,16 @@ class Arbitrer(object):
         signal.signal(signal.SIGTERM, sigint_handler)
 
         while True:
+            self.update_balance()
+
             self.depths = self.update_depths()
 
             self.tick()
-            time.sleep(config.refresh_rate)
             
             if is_sigint_up:
                 # 中断时需要处理的代码
+                logging.info("APP Exit")
                 self.terminate()
-                print ("Exit")
                 break
+            
+            time.sleep(config.refresh_rate)

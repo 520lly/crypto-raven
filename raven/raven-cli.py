@@ -8,6 +8,7 @@ import public_markets
 import glob
 import inspect
 from arbitrer import Arbitrer
+
 from logging.handlers import RotatingFileHandler
 import lib.broker_api as exchange_api
 import datetime
@@ -30,6 +31,11 @@ class ArbitrerCLI:
         if "watch" in args.command:
             self.create_arbitrer(args)
             self.arbitrer.loop()
+
+        if "t-watch" in args.command:
+            self.create_t_arbitrer(args)
+            self.arbitrer.loop()
+
         if "replay-history" in args.command:
             self.create_arbitrer(args)
             self.arbitrer.replay_history(args.replay_history)
@@ -89,7 +95,8 @@ class ArbitrerCLI:
             total_btc = 0.
             total_bch = 0.
             for market in pmarketsi:
-                # print(market)
+                market.get_balances()
+                print(market)
                 total_btc += market.btc_balance
                 total_bch += market.bch_balance
                 snapshot.snapshot_balance(market.name[7:], market.btc_balance, market.bch_balance)
@@ -100,6 +107,14 @@ class ArbitrerCLI:
 
     def create_arbitrer(self, args):
         self.arbitrer = Arbitrer()
+        if args.observers:
+            self.arbitrer.init_observers(args.observers.split(","))
+        if args.markets:
+            self.arbitrer.init_markets(args.markets.split(","))
+
+    def create_t_arbitrer(self, args):
+        from t_arbitrer import TrigangularArbitrer
+        self.arbitrer = TrigangularArbitrer()
         if args.observers:
             self.arbitrer.init_observers(args.observers.split(","))
         if args.markets:
@@ -140,6 +155,7 @@ class ArbitrerCLI:
         args = parser.parse_args()
         self.init_logger(args)
         self.exec_command(args)
+        print('main end')
 
 def main():
     cli = ArbitrerCLI()

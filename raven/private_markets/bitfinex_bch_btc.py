@@ -15,7 +15,7 @@ class PrivateBitfinex_BCH_BTC(Market):
                     api_key if api_key else config.Bitfinex_API_KEY,
                     api_secret if api_secret else config.Bitfinex_SECRET_TOKEN)
 
-        self.get_balances()
+        # self.get_balances()
  
     def _buy_limit(self, amount, price):
         """Create a buy limit order"""
@@ -56,6 +56,8 @@ class PrivateBitfinex_BCH_BTC(Market):
 
     def _get_order(self, order_id):
         res = self.trade_client.status_order(int(order_id))
+        logging.info('get_order: %s' % res)
+
         assert str(res['id']) == str(order_id)
         return self._order_status(res)
 
@@ -70,10 +72,11 @@ class PrivateBitfinex_BCH_BTC(Market):
         else:
             return False
 
-    def get_balances(self):
+    def _get_balances(self):
         """Get balance"""
         res = self.trade_client.balances()
-        # print("get_balances response:", res)
+
+        logging.debug("bitfinex get_balances response: %s" % res)
 
         for entry in res:
             if entry['type'] != 'exchange':
@@ -91,18 +94,7 @@ class PrivateBitfinex_BCH_BTC(Market):
             elif currency == 'BTC':
                 self.btc_available = float(entry['available'])
                 self.btc_balance = float(entry['amount'])
-
-    def test(self):
-        order_id = self.buy_limit(0.1, 0.02)
-        print(order_id)
-        order_status = self.get_order(order_id)
-        print(order_status)
-        cancel_status = self.cancel_order(order_id)
-        print(cancel_status)
-        order_status = self.get_order(order_id)
-        print(order_status)
-
-
+        return res
 
 
 

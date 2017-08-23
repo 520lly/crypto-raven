@@ -9,6 +9,9 @@ Currently supported exchanges to get data:
  - Bitfinex (BCH_BTC)
  - Bitfinex (BTC_USD)
  - Bittrex (BCH_BTC)
+ - Viabtc (BCH_BTC)
+ - Viabtc (BTC_CNY)
+ - Viabtc (BCH_CNY)
  - Bitstamp (USD)
  - BTC-e (USD)
  - OkCoin (CNY)
@@ -20,6 +23,9 @@ Currently supported exchanges to automate trade:
  - Bitfinex (BCH_BTC)
  - Bitfinex (BTC_USD)
  - Bittrex (BCH_BTC)
+ - Viabtc (BCH_BTC)
+ - Viabtc (BTC_CNY)
+ - Viabtc (BCH_CNY)
  - Bitstamp (USD)
  - OkCoin (CNY)
  - Huobi (CNY)
@@ -32,10 +38,8 @@ Currently supported exchanges to automate trade:
 
 # Installation And Configuration
 
-    $ cp raven/config.py-example raven/config.py
-
-Then edit config.py file to setup your preferences: watched markets
-and observers
+Create and edit local_config.py file to setup your preferences: watched markets
+and observers and keys.The config field in local_config.py will override those keys in config.py
 
 You need Python3 to run this program. To install on Debian, Ubuntu, or
 variants of them, use:
@@ -64,17 +68,23 @@ To use the observer XMPPMessager you will need to install sleekxmpp:
 To run the opportunity watcher:
 
     $ python3 raven/raven-cli.py watch -v
+    $ python3 raven/raven-cli.py watch -v -mViabtc_BCH_CNY,Viabtc_BCH_BTC,Viabtc_BTC_CNY
 
 To check your balance on an exchange (also a good way to check your accounts configuration):
 
     $ python3 raven/raven-cli.py -m HaobtcCNY get-balance
+    $ python3 raven/raven-cli.py -m Viabtc_BCH_CNY get-balance
     $ python3 raven/raven-cli.py -m Bitfinex_BCH_BTC get-balance
-    $ python3 raven/raven-cli.py -m Bitfinex_BCH_BTC,Bittrex_BCH_BTC get-balance
+    $ python3 raven/raven-cli.py -m Bitfinex_BCH_BTC,Bittrex_BCH_BTC,Viabtc_BCH_BTC get-balance
     $ python3 raven/raven-cli.py -m HaobtcCNY,OkCoinCNY,HuobiCNY get-balance
 
 Run tests
 
     $ nosetests arbitrage/
+
+
+Run t-arbitrage
+    $ python3 raven/raven-cli.py -m Viabtc_BCH_CNY,Viabtc_BCH_BTC,Viabtc_BTC_CNY t-watch -v
 
 # Alternative usage
 
@@ -92,6 +102,12 @@ arbitrage in haobtc, huobi or okcoin
 
     $ python3 raven/raven-cli.py -oTraderBot -mHaobtcCNY,HuobiCNY
     $ python3 raven/raven-cli.py -oTraderBot -mHaobtcCNY,OKCoinCNY
+
+bch bcc arbitrage in Bitfinex_BCH_BTC, Bittrex_BCH_BTC
+
+    $ python3 raven/raven-cli.py -o BCH_BTC_Arbitrage -m Bitfinex_BCH_BTC,Bittrex_BCH_BTC
+    $ python3 raven/raven-cli.py -o BCH_BTC_Arbitrage -m Bitfinex_BCH_BTC,Bittrex_BCH_BTC,Viabtc_BCH_BTC
+
 
 balance statatistic 
 
@@ -139,5 +155,5 @@ If for some reason you feel like donating a few micro btc to future development,
 
 * @[Maxime Biais](https://github.com/maxme) for [the original work on **bitcoin-arbitrage**](https://github.com/maxme/https://github.com/maxme/bitcoin-arbitrage)
 
-![Join Us](xiaomiquan.jpg)
+![Join Us](docs/xmq.jpg)
 

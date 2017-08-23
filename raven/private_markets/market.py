@@ -1,6 +1,11 @@
 # Copyright (C) 2017, Philsong <songbohr@gmail.com>
 
 import logging
+import config
+import inspect
+
+def get_current_function_name():
+    return inspect.stack()[1][3]
 
 class TradeException(Exception):
     pass
@@ -14,57 +19,113 @@ class Market:
         self.market_currency = market_currency
         self.pair_code = pair_code
 
+        self.cny_balance = 0.
+        self.cny_available = 0.
+
         self.btc_balance = 0.
-        self.bch_balance = 0.
         self.btc_available = 0.
+
+        self.bch_balance = 0.
         self.bch_available = 0.
-        # self.market = None
 
     def __str__(self):
-        return "%s: %s" % (self.name[7:], str({"btc_balance": self.btc_balance,
+        return "%s: %s" % (self.name[7:], str({"cny_balance": self.cny_balance,
+                                            "cny_available": self.cny_available,
+                                            "btc_balance": self.btc_balance,
+                                            "btc_available": self.btc_available,
                                            "bch_balance": self.bch_balance,
-                                           "btc_available": self.btc_available,
                                            "bch_available": self.bch_available}))
 
     def buy_limit(self, amount, price, client_id=None):
-        logging.verbose("BUY LIMIT %f %s at %f %s @%s" % (amount, self.market_currency, 
+        if amount > config.bch_guide_dog_volume:
+            raise
+
+        logging.info("BUY LIMIT %f %s at %f %s @%s" % (amount, self.market_currency, 
                         price, self.base_currency, self.brief_name))
-        if client_id:
-            return self._buy_limit(amount, price, client_id)
-        else:
-            return self._buy_limit(amount, price)
+
+        try:
+            if client_id:
+                return self._buy_limit(amount, price, client_id)
+            else:
+                return self._buy_limit(amount, price)
+        except Exception as e:
+            logging.error('%s %s except: %s' % (self.name, get_current_function_name(), e))
+            return None
 
 
     def sell_limit(self, amount, price, client_id=None):
-        logging.verbose("SELL LIMIT %f %s at %f %s @%s" % (amount, self.market_currency, 
+        if amount > config.bch_guide_dog_volume:
+            raise
+            
+        logging.info("SELL LIMIT %f %s at %f %s @%s" % (amount, self.market_currency, 
                         price, self.base_currency, self.brief_name))
-        if client_id:
-            return self._sell_limit(amount, price, client_id)
-        else:
-            return self._sell_limit(amount, price)
+
+        try:
+            if client_id:
+                return self._sell_limit(amount, price, client_id)
+            else:
+                return self._sell_limit(amount, price)
+        except Exception as e:
+            logging.error('%s %s except: %s' % (self.name, get_current_function_name(), e))
+            return None
 
 
     def buy_maker(self, amount, price):
-        logging.verbose("BUY MAKER %f %s at %f %s @%s" % (amount, self.market_currency, 
+        logging.info("BUY MAKER %f %s at %f %s @%s" % (amount, self.market_currency, 
                         price, self.base_currency, self.brief_name))
 
-        return self._buy_maker(amount, price)
-
+        try:
+            return self._buy_maker(amount, price)
+        except Exception as e:
+            logging.error('%s %s except: %s' % (self.name, get_current_function_name(), e))
+            return None
 
     def sell_maker(self, amount, price):
-        logging.verbose("SELL MAKER %f %s at %f %s @%s" % (amount, self.market_currency, 
+        logging.info("SELL MAKER %f %s at %f %s @%s" % (amount, self.market_currency, 
                         price, self.base_currency, self.brief_name))
-
-        return self._sell_maker(amount, price)
+        try:
+            return self._sell_maker(amount, price)
+        except Exception as e:
+            logging.error('%s %s except: %s' % (self.name, get_current_function_name(), e))
+            return None
 
     def get_order(self, order_id):
-        return self._get_order(order_id)
+        if not order_id:
+            return None
+
+        try:
+            return self._get_order(order_id)
+        except Exception as e:
+            logging.error('%s %s except: %s' % (self.name, get_current_function_name(), e))
+            return None
+
 
     def cancel_order(self, order_id):
-        return self._cancel_order(order_id)
+        if not order_id:
+            return None
+
+        try:
+            return self._cancel_order(order_id)
+        except Exception as e:
+            logging.error('%s %s except: %s' % (self.name, get_current_function_name(), e))
+
+            return None
+
+    def get_balances(self):
+        try:
+            res = self._get_balances()
+        except Exception as e:
+            logging.error('%s %s except: %s' % (self.name, get_current_function_name(), e))
+            return None
+        return res
 
     def cancel_all(self):
-        return self._cancel_all()
+        try:
+            res = self._cancel_all()
+        except Exception as e:
+            logging.error('%s %s except: %s' % (self.name, get_current_function_name(), e))
+            return None
+        return res
 
     def _buy_limit(self, amount, price):
         raise NotImplementedError("%s.buy(self, amount, price)" % self.name)
@@ -93,8 +154,8 @@ class Market:
     def withdraw(self, amount, address):
         raise NotImplementedError("%s.withdraw(self, amount, address)" % self.name)
 
-    def get_balances(self):
+    def _get_balances(self):
         raise NotImplementedError("%s.get_balances(self)" % self.name)
 
     def test(self):
-        pass
+        raise
