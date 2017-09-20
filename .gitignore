@@ -50,9 +50,10 @@ trade_history
 balance_history
 download.sh
 *.log
-*.do
 # marketmaker.py
 *.sublime-*
 snapshot_*.txt
-
+.vscode
+*.html
+tools/*.png
 
