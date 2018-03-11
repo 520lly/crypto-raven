@@ -11,7 +11,7 @@ from .basicbot import BasicBot
 import threading
 from brokers.broker_factory import create_brokers
 
-class Liquid(BasicBot):
+class Hedge(BasicBot):
     def __init__(self, mm_market='KKEX_BCH_BTC', 
                         refer_markets=['Bitfinex_BCH_BTC'],
                         hedge_market='Bitfinex_BCH_BTC'):

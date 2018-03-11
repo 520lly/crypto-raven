@@ -1,15 +1,7 @@
 markets = [
-# "BitstampUSD",
-# "BTCCCNY",
-# "BtceUSD",
-# "CoinbaseUSD",
-# "GeminiUSD",
-# "KrakenEUR",
-# "KrakenUSD",
-# "OKCoinCNY",
-# "HuobiCNY",
 # "Bitfinex_BCH_BTC",
 # "Bittrex_BCH_BTC",
+# "KKEX_BCH_BTC",
 ]
 
 # observers if any
@@ -24,17 +16,20 @@ trade_wait = 10
 
 RISK_PROTECT_MAX_VOLUMN = 100
 
-LIQUID_MAX_BCH_AMOUNT = 50
+# liquid strategy parameters config
+LIQUID_MAX_BCH_AMOUNT = 1
 LIQUID_MIN_BCH_AMOUNT = 0.1
 
 LIQUID_BUY_ORDER_PAIRS = 5
 LIQUID_SELL_ORDER_PAIRS = 5
-LIQUID_DIFF = 0.001 #20%
-LIQUID_BTC_RESERVE = 50
-LIQUID_BCH_RESERVE = 500
-LIQUID_HEDGE_MIN_AMOUNT = 0.01
+LIQUID_INIT_DIFF = 0.03 #3%
+LIQUID_MAX_DIFF = 0.05 #5%
+LIQUID_MIN_DIFF = 0.01 #1%
+LIQUID_BTC_RESERVE = 5
+LIQUID_BCH_RESERVE = 50
+LIQUID_HEDGE_MIN_AMOUNT = 0.001
 
-
+# arbitrage config
 btc_profit_thresh = 0.001  # in BTC
 btc_perc_thresh = 0.01  # in 0.01%
 bch_max_tx_volume = 5  # in BCH
@@ -96,17 +91,8 @@ EMAIL_USE_TLS = True
 EMAIL_RECEIVER = ['FIXME@FIXME.com']
 
 
-#### XMPP Observer
-xmpp_jid = "FROM@jabber.org"
-xmpp_password = "FIXME"
-xmpp_to = "TO@jabber.org"
-
-# broker thrift server
-BROKER_HOST = "127.0.0.1"
-BROKER_PORT = 18030
-
 #### Trader Bot Config
-# Access to Broker APIs
+# Access to exchange APIs
 
 bitstamp_username = "FIXME"
 bitstamp_password = "FIXME"
@@ -147,8 +133,10 @@ WEBSOCKET_PORT = 13001
 
 ENV = 'local'
 
+kafka_topic = 'df-depth-replicated'
+bootstrap_servers = 'localhost:9092'
 try:
-    from local_config import *
+    from xrypto.local_config import *
 except ImportError:
     pass
 

@@ -5,31 +5,23 @@ It gets order books from supported exchanges and calculate arbitrage and triangu
 opportunities between each markets. It takes market depth into account.
 
 Currently supported exchanges to get/feed data:
- - Bitfinex (BCH_BTC)
- - Bitfinex (BTC_USD)
- - Bittrex (BCH_BTC)
- - Viabtc (BCH_BTC)
- - Viabtc (BTC_CNY)
- - Viabtc (BCH_CNY)
+ - Bitfinex
+ - Bittrex
+ - Viabtc
  - Bitstamp (USD)
- - BTC-e (USD)
  - OkCoin (CNY)
  - Huobi (CNY)
- - Broker (CNY)
  - Bitstar (Future)
  - OKEx (Future)
  - Yunbi (CNY)
  - Jubi (CNY)
  - Binance
+ - KKEX
 
 Currently supported exchanges to automate trade:
- - Bitfinex (BCH_BTC)
- - Bitfinex (BTC_USD)
- - Bittrex (BCH_BTC)
- - Viabtc (BCH_BTC)
- - Viabtc (BTC_CNY)
- - Viabtc (BCH_CNY)
- - Bitstamp (USD)
+ - Bitfinex 
+ - Bittrex 
+ - Viabtc
  - OkCoin (CNY)
  - Huobi (CNY)
  - Bitstar (Future)
@@ -37,6 +29,7 @@ Currently supported exchanges to automate trade:
  - Yunbi (CNY)
  - Jubi (CNY)
  - Binance
+ - KKEX
 
 # WARNING
 
@@ -53,6 +46,24 @@ variants of them, use:
 
     sudo apt-get install python3 python3-pip python-nose
     pip3 install -r requirements.txt
+
+In our new version, you also need run Kafka to pub/sub the depth data. see http://kafka.apache.org/ to install.
+
+
+
+
+# command
+    source setup-env.sh
+    
+    source setup-env.sh
+    python xrypto/cli.py feed -mKKEX_BCH_BTC,Bitfinex_BCH_BTC 
+    python xrypto/cli.py -oHedge
+    python xrypto/cli.py -oBalanceDumper
+
+    python xrypto/observers/balancedumper.py
+    python xrypto/cli.py -oLiquid
+
+    
 
 # Debug
 
@@ -125,6 +136,8 @@ Help
 
 liquid in kkex
 
+    python3 xrypto/cli.py -mKKEX_BCH_BTC,Bitfinex_BCH_BTC -oLiquid
+
     python3 xrypto/cli.py -mKKEX_BCH_BTC,Bitfinex_BCH_BTC,Bittrex_BCH_BTC -oLiquid
     python3 xrypto/cli.py -mKKEX_BCH_BTC,Bittrex_BCH_BTC -oLiquid
     python3 xrypto/cli.py -mViabtc_BCH_BTC,Bitfinex_BCH_BTC,Bittrex_BCH_BTC -oLiquid
@@ -145,8 +158,9 @@ trianglar-arbitrage in viabtc
 
 balance statatistic 
 
-    python3 xrypto/cli.py -oBalanceDumper -mOKCoin_BTC_CNY
-    
+    python3 xrypto/cli.py -oBalanceDumper -mKKEX_BCH_BTC
+    python3 xrypto/cli.py -oBalanceDumper -mBitfinex_BCH_BTC
+
 price diff:
 
     python3 xrypto/cli.py -oPriceMonitor -mViabtc_BTC_CNY,OKEx_Future_Quarter,Bitfinex_BTC_USD
@@ -185,10 +199,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 If for some reason you feel like donating a few micro btc to future development, those should go here:
 
 `1NDnnWCUu926z4wxA3sNBGYWNQD3mKyes8`
-
-## Credits
-
-* @[Maxime Biais](https://github.com/maxme) for [the original work on **bitcoin-arbitrage**](https://github.com/maxme/https://github.com/maxme/bitcoin-arbitrage)
 
 ![Join Us](docs/xmq.jpg)
 

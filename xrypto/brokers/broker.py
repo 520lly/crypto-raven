@@ -1,8 +1,9 @@
 # Copyright (C) 2017, Philsong <songbohr@gmail.com>
 
 import logging
-import config
 import inspect
+
+import xrypto.config as config
 
 def get_current_function_name():
     return inspect.stack()[1][3]
@@ -13,7 +14,6 @@ class TradeException(Exception):
 class Broker(object):
     def __init__(self, base_currency, market_currency, pair_code):
         self.name = self.__class__.__name__
-        self.brief_name  = self.name[6:]
 
         self.base_currency = base_currency
         self.market_currency = market_currency
@@ -29,7 +29,7 @@ class Broker(object):
         self.bch_available = 0.
 
     def __str__(self):
-        return "%s: %s" % (self.brief_name, str({"cny_balance": self.cny_balance,
+        return "%s: %s" % (self.name, str({"cny_balance": self.cny_balance,
                                             "cny_available": self.cny_available,
                                             "btc_balance": self.btc_balance,
                                             "btc_available": self.btc_available,
@@ -42,7 +42,7 @@ class Broker(object):
             raise
 
         logging.info("BUY LIMIT %f %s at %f %s @%s" % (amount, self.market_currency, 
-                        price, self.base_currency, self.brief_name))
+                        price, self.base_currency, self.name))
 
         try:
             if client_id:
@@ -60,9 +60,9 @@ class Broker(object):
             raise
             
         logging.info("SELL LIMIT %f %s at %f %s @%s" % (amount, self.market_currency, 
-                        price, self.base_currency, self.brief_name))
+                        price, self.base_currency, self.name))
 
-        try:
+        try:  
             if client_id:
                 return self._sell_limit(amount, price, client_id)
             else:
@@ -78,7 +78,7 @@ class Broker(object):
             raise
 
         logging.info("BUY MAKER %f %s at %f %s @%s" % (amount, self.market_currency, 
-                        price, self.base_currency, self.brief_name))
+                        price, self.base_currency, self.name))
 
         try:
             return self._buy_maker(amount, price)
@@ -92,7 +92,7 @@ class Broker(object):
             raise
             
         logging.info("SELL MAKER %f %s at %f %s @%s" % (amount, self.market_currency, 
-                        price, self.base_currency, self.brief_name))
+                        price, self.base_currency, self.name))
         try:
             return self._sell_maker(amount, price)
         except Exception as e:
